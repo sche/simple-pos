@@ -33,10 +33,6 @@ contract SimplePOS {
         public
         payable
     {
-        require(msg.value > 0, "ETH is required to form bonus tokens pool");
-        require(_initialRatio > 0, "Initial ratio should be positive");
-        require(_commission < 10000, "Commission should be less than 100%");
-        require(_curveCoefficient < 10000, "Curve coefficient should be less than 100%");
         owner = msg.sender;
         exchange = _exchange;
         sposToken = new SimplePOSToken(_sposTokenName, _sposTokenSymbol);
@@ -52,18 +48,8 @@ contract SimplePOS {
         payable
     {                
         uint bonusPart = msg.value.mul(commission).div(10000);        
-        owner.transfer(msg.value.sub(bonusPart));
-        // exchange commision in eth on bonus part tokens
         uint incomingBonusTokens = exchange.ethToTokenSwapInput.value(bonusPart)(0, now);        
-        processIncomingBonusTokens(incomingBonusTokens);
-    }
-
-    function processIncomingBonusTokens(
-        uint incomingBonusTokens)
-        internal
-    {
         uint bonusTokenBalance = IERC20(exchange.tokenAddress()).balanceOf(address(this));
-        // sposToken.mint(address(0x88eb62650112e163d72b43C328d7A878e6951818), 1000000000000000000); - it cases revert here with standalone ganache
         uint sposTokenSupply = sposToken.totalSupply();
         uint invariant = bonusTokenBalance.div(sposTokenSupply);
         uint newBonusTokenBalanceForInvariant = bonusTokenBalance + incomingBonusTokens - incomingBonusTokens.mul(curveCoefficient).div(10000);
